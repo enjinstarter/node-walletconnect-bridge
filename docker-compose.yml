@@ -1,0 +1,23 @@
+version: '3.7'
+
+networks:
+  default:
+
+volumes:
+  redis:
+
+services:
+  redis:
+    image: 'redis:5-alpine'
+    volumes:
+      - redis:/data
+
+  bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      NODE_ENV: development
+      REDIS_URL: redis://redis:6379/0
