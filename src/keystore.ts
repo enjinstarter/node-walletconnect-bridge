@@ -7,6 +7,7 @@ const redisClient = createClient({
 });
 
 export const init = async () => {
+  console.log(`connecting to redis: ${config.redis.url}`);
   return redisClient.connect();
 };
 
