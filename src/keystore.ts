@@ -1,54 +1,50 @@
-import redis from 'redis'
-import { ISocketMessage, ISocketSub, INotification } from './types'
-import bluebird from 'bluebird'
-import config from './config'
+import { createClient } from "redis";
+import { ISocketMessage, ISocketSub, INotification } from "./types";
+import config from "./config";
 
-bluebird.promisifyAll(redis.RedisClient.prototype)
-bluebird.promisifyAll(redis.Multi.prototype)
+const redisClient = createClient({
+  url: config.redis.url,
+});
 
-const redisClient: any = redis.createClient(config.redis)
+export const init = async () => {
+  return redisClient.connect();
+};
 
-const subs: ISocketSub[] = []
+const subs: ISocketSub[] = [];
 
-export const setSub = (subscriber: ISocketSub) => subs.push(subscriber)
+export const setSub = (subscriber: ISocketSub) => subs.push(subscriber);
 export const getSub = (topic: string) =>
   subs.filter(
-    subscriber =>
+    (subscriber) =>
       subscriber.topic === topic && subscriber.socket.readyState === 1
-  )
+  );
 
 export const setPub = (socketMessage: ISocketMessage) =>
-  redisClient.lpushAsync(
+  redisClient.lPush(
     `socketMessage:${socketMessage.topic}`,
     JSON.stringify(socketMessage)
-  )
+  );
 
-export const getPub = (topic: string): ISocketMessage[] => {
-  return redisClient
-    .lrangeAsync(`socketMessage:${topic}`, 0, -1)
-    .then((data: any) => {
-      if (data) {
-        let localData: ISocketMessage[] = data.map((item: string) =>
-          JSON.parse(item)
-        )
-        redisClient.del(`socketMessage:${topic}`)
-        return localData
-      }
-    })
-}
+export const getPub = (topic: string) =>
+  redisClient.lRange(`socketMessage:${topic}`, 0, -1).then((data: any) => {
+    if (data) {
+      let localData: ISocketMessage[] = data.map((item: string) =>
+        JSON.parse(item)
+      );
+      redisClient.del(`socketMessage:${topic}`);
+      return localData;
+    }
+  });
 
 export const setNotification = (notification: INotification) =>
-  redisClient.lpushAsync(
+  redisClient.lPush(
     `notification:${notification.topic}`,
     JSON.stringify(notification)
-  )
+  );
 
-export const getNotification = (topic: string) => {
-  return redisClient
-    .lrangeAsync(`notification:${topic}`, 0, -1)
-    .then((data: any) => {
-      if (data) {
-        return data.map((item: string) => JSON.parse(item))
-      }
-    })
-}
+export const getNotification = (topic: string) =>
+  redisClient.lRange(`notification:${topic}`, 0, -1).then((data: any) => {
+    if (data) {
+      return data.map((item: string) => JSON.parse(item));
+    }
+  });

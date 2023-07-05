@@ -1,12 +1,13 @@
-FROM node:10-slim
+FROM node:18-slim
 
 WORKDIR /root
 COPY package.json ./
-COPY package-lock.json ./
-RUN npm install --no-optional && npm cache clean --force
+COPY pnpm-lock.yaml ./
+RUN npm i -g pnpm
+RUN pnpm install --frozen-lockfile
 ENV PATH /root/node_modules/.bin/:$PATH
 
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 CMD ["node", "/root/build"]
