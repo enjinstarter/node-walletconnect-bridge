@@ -136,3 +136,4 @@ jobs:
           ParameterKey=SsmParamNameRedisUrl,UsePreviousValue=true \
           ParameterKey=SsmParamNameRedisAuth,UsePreviousValue=true \          
           ParameterKey=SystemsManagerParameterStoreIamPolicy,UsePreviousValue=true
+
