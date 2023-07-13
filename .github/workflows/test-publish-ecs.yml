@@ -115,5 +115,22 @@ jobs:
           ParameterKey=EnvNodeEnv,UsePreviousValue=true \
           ParameterKey=EnvironmentName,UsePreviousValue=true \
           ParameterKey=FargatePlatformVersion,UsePreviousValue=true \
-          ParameterKey=HealthCheckPath,UsePreviousValue=true
+          ParameterKey=HealthCheckPath,UsePreviousValue=true \
+          ParameterKey=ImageTag,ParameterValue="${IMAGE_TAG}" \
+          ParameterKey=ListenerRulePriority,UsePreviousValue=true \
+          ParameterKey=LoadBalancerHostedZoneId,UsePreviousValue=true \
+          ParameterKey=PrivateListener,UsePreviousValue=true \
+          ParameterKey=PrivateLoadBalancerSecurityGroupId,UsePreviousValue=true \
+          ParameterKey=ProjectName,UsePreviousValue=true \
+          ParameterKey=PublicListener,UsePreviousValue=true \
+          ParameterKey=PublicLoadBalancerDnsName,UsePreviousValue=true \
+          ParameterKey=PublicLoadBalancerSecurityGroupId,UsePreviousValue=true \
+          ParameterKey=S3IamPolicy,UsePreviousValue=true \
+          ParameterKey=ServiceContainerPort,UsePreviousValue=true \
+          ParameterKey=ServiceCpuHighAlarmThreshold,UsePreviousValue=true \
+          ParameterKey=ServiceDomainHostedZoneId,UsePreviousValue=true \
+          ParameterKey=ServiceDomainName,UsePreviousValue=true \
+          ParameterKey=ServiceMemoryHighAlarmThreshold,UsePreviousValue=true \
+          ParameterKey=ServiceProtocol,UsePreviousValue=true \
+          ParameterKey=ServiceSubnets,UsePreviousValue=true
 
