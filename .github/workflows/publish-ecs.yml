@@ -134,6 +134,6 @@ jobs:
           ParameterKey=ServiceProtocol,UsePreviousValue=true \
           ParameterKey=ServiceSubnets,UsePreviousValue=true \
           ParameterKey=SsmParamNameRedisUrl,UsePreviousValue=true \
-          ParameterKey=SsmParamNameRedisAuth,UsePreviousValue=true \          
+          ParameterKey=SsmParamNameRedisAuth,UsePreviousValue=true \
           ParameterKey=SystemsManagerParameterStoreIamPolicy,UsePreviousValue=true
 
