@@ -1,0 +1,119 @@
+name: Publish Docker image to Amazon ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: 'Environment'
+        required: true
+        options:
+          - qat
+          - uat
+          - pt
+          - prd
+        default: 'qat'
+
+env:
+  AWS_REGION: ap-northeast-1
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Only for qat, uat, pt or prd environment
+        if: ${{ github.event.inputs.environment != 'qat' && github.event.inputs.environment != 'uat' && github.event.inputs.environment != 'pt' && github.event.inputs.environment != 'prd' }}
+        uses: actions/github-script@v5
+        with:
+          script: core.setFailed('Invalid environment - ${{ github.event.inputs.environment }}')
+      - name: Configure AWS credentials for Production
+        if: ${{ github.event.inputs.environment == 'prd' }}
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.PRD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PRD_AWS_SECRET_ACCESS_KEY }}
+      - name: Configure AWS credentials for Pentest
+        if: ${{ github.event.inputs.environment == 'pt' }}
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.PT_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PT_AWS_SECRET_ACCESS_KEY }}
+      - name: Configure AWS credentials for UAT
+        if: ${{ github.event.inputs.environment == 'uat' }}
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.UAT_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.UAT_AWS_SECRET_ACCESS_KEY }}
+      - name: Configure AWS credentials for QAT
+        if: ${{ github.event.inputs.environment == 'qat' }}
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION}}
+          aws-access-key-id: ${{ secrets.QAT_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.QAT_AWS_SECRET_ACCESS_KEY }}
+      - name: Set environment variables for Production
+        if: ${{ github.event.inputs.environment == 'prd' }}
+        run: |
+          echo "CLOUDFORMATION_STACK_NAME=${{ secrets.PRD_CLOUDFORMATION_STACK_NAME }}" >> $GITHUB_ENV
+          echo "DOCKER_URI=${{ secrets.PRD_DOCKER_URI }}" >> $GITHUB_ENV
+      - name: Set environment variables for Pentest
+        if: ${{ github.event.inputs.environment == 'pt' }}
+        run: |
+          echo "CLOUDFORMATION_STACK_NAME=${{ secrets.PT_CLOUDFORMATION_STACK_NAME }}" >> $GITHUB_ENV
+          echo "DOCKER_URI=${{ secrets.PT_DOCKER_URI }}" >> $GITHUB_ENV
+      - name: Set environment variables for UAT
+        if: ${{ github.event.inputs.environment == 'uat' }}
+        run: |
+          echo "CLOUDFORMATION_STACK_NAME=${{ secrets.UAT_CLOUDFORMATION_STACK_NAME }}" >> $GITHUB_ENV
+          echo "DOCKER_URI=${{ secrets.UAT_DOCKER_URI }}" >> $GITHUB_ENV
+      - name: Set environment variables for QAT
+        if: ${{ github.event.inputs.environment == 'qat' }}
+        run: |
+          echo "CLOUDFORMATION_STACK_NAME=${{ secrets.QAT_CLOUDFORMATION_STACK_NAME }}" >> $GITHUB_ENV
+          echo "DOCKER_URI=${{ secrets.QAT_DOCKER_URI }}" >> $GITHUB_ENV
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-tag-push-image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $DOCKER_URI:$IMAGE_TAG .
+          docker push $DOCKER_URI:$IMAGE_TAG
+          echo "::set-output name=image_tag::$IMAGE_TAG"
+      - name: Update AWS CloudFormation Stack
+        env:
+          IMAGE_TAG: ${{ steps.build-tag-push-image.outputs.image_tag }}
+        run: |
+          aws cloudformation update-stack --region "${AWS_REGION}" --stack-name "${CLOUDFORMATION_STACK_NAME}" --use-previous-template --capabilities CAPABILITY_NAMED_IAM --parameters \
+          ParameterKey=AppName,UsePreviousValue=true \
+          ParameterKey=AssignPublicIp,UsePreviousValue=true \
+          ParameterKey=AutoScaleMaxCapacity,UsePreviousValue=true \
+          ParameterKey=AutoScaleMinCapacity,UsePreviousValue=true \
+          ParameterKey=CacheSecurityGroupId,UsePreviousValue=true \
+          ParameterKey=Certificate,UsePreviousValue=true \
+          ParameterKey=ClusterName,UsePreviousValue=true \
+          ParameterKey=ClusterVpc,UsePreviousValue=true \
+          ParameterKey=ContainerCpu,UsePreviousValue=true \
+          ParameterKey=ContainerMemory,UsePreviousValue=true \
+          ParameterKey=DatabaseSecurityGroupId,UsePreviousValue=true \
+          ParameterKey=DeployMaxPercent,UsePreviousValue=true \
+          ParameterKey=DeployMinPercent,UsePreviousValue=true \
+          ParameterKey=DesiredCount,UsePreviousValue=true \
+          ParameterKey=EmailAddress01,UsePreviousValue=true \
+          ParameterKey=EmailAddress02,UsePreviousValue=true \
+          ParameterKey=EmailAddress03,UsePreviousValue=true \
+          ParameterKey=EnvNodeEnv,UsePreviousValue=true \
+          ParameterKey=EnvironmentName,UsePreviousValue=true \
+          ParameterKey=FargatePlatformVersion,UsePreviousValue=true \
+          ParameterKey=HealthCheckPath,UsePreviousValue=true
+
