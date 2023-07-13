@@ -4,6 +4,7 @@ import config from "./config";
 
 const redisClient = createClient({
   url: config.redis.url,
+  password: config.redis.auth
 });
 
 export const init = async () => {

@@ -5,6 +5,7 @@ const host = process.env.HOST || `0.0.0.0:${port}`;
 
 const redis = {
   url: process.env.REDIS_URL || "redis://localhost:6379/0",
+  auth: process.env.REDIS_AUTH || 'authpass',
   prefix: process.env.REDIS_PREFIX || "walletconnect-bridge",
 };
 
